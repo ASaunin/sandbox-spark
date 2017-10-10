@@ -14,14 +14,21 @@ object MovieRatingsCounter {
   private val folder = "src/main/resources/data/"
   private val spark = SessionProvider.getContext(this.getClass.getName)
 
-  def getMovieRatings(path: String): RDD[(Int, Int, Int)] = {
+  type MovieRating = (Int, Double)
+
+  type UserRatingPair = (Int, (MovieRating, MovieRating))
+
+  def getMovieRatings(path: String): RDD[(Int, MovieRating)] = {
     val rdd = spark.textFile(path)
     val header = rdd.first()
 
     rdd.filter(row => row != header)
       .map(row => {
         val fields = row.split("\t")
-        (fields(0).toInt, fields(1).toInt, fields(2).toInt)
+        val userId = fields(0).toInt
+        val movieId = fields(1).toInt
+        val rating = fields(2).toDouble
+        (userId, (movieId, rating))
       })
   }
 
@@ -44,13 +51,13 @@ object MovieRatingsCounter {
   }
 
   def main(args: Array[String]) {
-    val movieNames = getMovieNames(folder + "movies.item")
+    val movieNames = getMovieNames(folder + "movie_names.data")
     val movies = spark.broadcast(movieNames)
 
     val rows = getMovieRatings(folder + "movie_ratings.data")
 
     println("Movies count by rating:")
-    val ratings = rows.map(row => row._3)
+    val ratings = rows.map(_._2._2)
 
     val ratingCounts = ratings.countByValue().toSeq.sortBy(_._1)
 
@@ -62,9 +69,9 @@ object MovieRatingsCounter {
 
     val topCount = 25
     println(s"\nTop $topCount most popular movies:")
-    val movieAverageRatings = rows.map(row => (row._2, (row._3, 1)))
+    val movieAverageRatings = rows.map(row => (row._2._1, (row._2._2, 1)))
       .reduceByKey((x, y) => (x._1 + y._1, x._2 + y._2))
-      .map(tuple => (tuple._2._1.toFloat / tuple._2._2.toFloat, tuple._1))
+      .map(tuple => (tuple._2._1 / tuple._2._2, tuple._1))
 
     movieAverageRatings
       .sortByKey(ascending = false)
