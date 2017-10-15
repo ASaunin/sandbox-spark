@@ -7,18 +7,17 @@ import org.asaunin.spark.core.SessionProvider
 object WordCounter {
 
   private val log = Logger.getLogger("org.asaunin")
-  private val path = "src/main/resources/data/book.txt"
 
-  def getAllWords(path: String): RDD[String] = {
+  def getAllWords(fileName: String): RDD[String] = {
     val spark = SessionProvider.getContext(this.getClass.getName)
-    val rdd = spark.textFile(path)
+    val rdd = spark.textFile("data/" + fileName)
     rdd.flatMap(row => row.split("\\W+"))
       .map(word => word.toLowerCase)
 
   }
 
   def main(args: Array[String]) {
-    val rows = getAllWords(path)
+    val rows = getAllWords("book.txt")
 
     val wordCounts = rows
       .map(word => (word, 1))
@@ -31,7 +30,7 @@ object WordCounter {
         .foreach(wordCount => {
           val word = wordCount._1
           val count = wordCount._2
-          println(f"Word '$word' repeats $count times")
+          log.info(f"Word '$word' repeats $count times")
         })
   }
 

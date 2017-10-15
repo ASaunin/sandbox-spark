@@ -7,11 +7,10 @@ import org.asaunin.spark.core.SessionProvider
 object MostPopularSuperheroes {
 
   private val log = Logger.getLogger("org.asaunin")
-  private val folder = "src/main/resources/data/"
   private val spark = SessionProvider.getContext(this.getClass.getName)
 
-  def getHeroNames(path: String): collection.Map[Int, String] = {
-    val rdd = spark.textFile(path)
+  def getHeroNames(fileName: String): collection.Map[Int, String] = {
+    val rdd = spark.textFile("data/" + fileName)
     rdd.map(row => {
       val fields = row.split('\"')
       val id = fields(0).trim.toInt
@@ -20,8 +19,8 @@ object MostPopularSuperheroes {
     }).collectAsMap()
   }
 
-  def getHeroRelations(path: String): RDD[(Int, Set[Int])] = {
-    val rdd = spark.textFile(path)
+  def getHeroRelations(fileName: String): RDD[(Int, Set[Int])] = {
+    val rdd = spark.textFile("data/" + fileName)
     rdd.map(row => {
       val fields = row.split("\\s+")
       val heroId = fields(0).toInt
@@ -34,10 +33,10 @@ object MostPopularSuperheroes {
   }
 
   def main(args: Array[String]) {
-    val heroesMap = getHeroNames(folder + "marvel_names.txt")
+    val heroesMap = getHeroNames("marvel_names.txt")
     val heroNames = spark.broadcast(heroesMap)
 
-    val heroRelations = getHeroRelations(folder + "marvel_graph.txt")
+    val heroRelations = getHeroRelations("marvel_graph.txt")
 
     val totalHeroRelations = heroRelations.map(hero => {
       val id = hero._1
@@ -58,7 +57,7 @@ object MostPopularSuperheroes {
       .foreach(hero => {
         val name = hero._2
         val relationsCount = hero._1
-        println(f"'$name' is related with $relationsCount other Marvel heroes")
+        log.info(f"'$name' is related with $relationsCount other Marvel heroes")
       })
   }
 

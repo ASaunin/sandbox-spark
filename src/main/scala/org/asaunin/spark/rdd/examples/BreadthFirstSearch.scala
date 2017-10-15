@@ -12,7 +12,6 @@ import scala.util.control.Breaks._
 object BreadthFirstSearch {
 
   private val log = Logger.getLogger("org.asaunin")
-  private val folder = "src/main/resources/data/"
   private val spark = SessionProvider.getContext(this.getClass.getName)
 
   object Color extends Enumeration {
@@ -31,8 +30,8 @@ object BreadthFirstSearch {
   private type BfsData = (Array[Int], Int, Color)
   private type BfsNode = (Int, BfsData)
 
-  def getHeroRelationsGraph(path: String): RDD[BfsNode] = {
-    val rdd = spark.textFile(path)
+  def getHeroRelationsGraph(fileName: String): RDD[BfsNode] = {
+    val rdd = spark.textFile("data/" + fileName)
     rdd.map(row => {
       val fields = row.split("\\s+")
       val heroId = fields(0).toInt
@@ -53,8 +52,8 @@ object BreadthFirstSearch {
     })
   }
 
-  def getHeroNames(path: String): RDD[(Int, String)] = {
-    val rdd = spark.textFile(path)
+  def getHeroNames(fileName: String): RDD[(Int, String)] = {
+    val rdd = spark.textFile("data/" + fileName)
     rdd.map(row => {
       val fields = row.split('\"')
       val id = fields(0).trim.toInt
@@ -137,11 +136,11 @@ object BreadthFirstSearch {
   }
 
   def main(args: Array[String]) {
-    var namesById = getHeroNames(folder + "marvel_names.txt")
+    var namesById = getHeroNames("marvel_names.txt")
     val fromHeroName = namesById.lookup(fromHeroId).head
     val toHeroName = namesById.lookup(toHeroId).head
 
-    var bfsNodes = getHeroRelationsGraph(folder + "marvel_graph.txt")
+    var bfsNodes = getHeroRelationsGraph("marvel_graph.txt")
 
     counter = Some(spark.longAccumulator("Counter"))
 

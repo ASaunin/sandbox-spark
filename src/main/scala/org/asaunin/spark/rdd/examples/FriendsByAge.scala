@@ -7,11 +7,10 @@ import org.asaunin.spark.core.SessionProvider
 object FriendsByAge {
 
   private val log = Logger.getLogger("org.asaunin")
-  private val path = "src/main/resources/data/friends_by_age.csv"
 
-  def getFriendsByAge(path: String): RDD[(Int, Int)] = {
+  def getFriendsByAge(fileName: String): RDD[(Int, Int)] = {
     val spark = SessionProvider.getContext(this.getClass.getName)
-    val rdd = spark.textFile(path)
+    val rdd = spark.textFile("data/" + fileName)
     val header = rdd.first()
 
     rdd.filter(row => row != header)
@@ -24,7 +23,7 @@ object FriendsByAge {
   }
 
   def main(args: Array[String]): Unit = {
-    val rdd = getFriendsByAge(path)
+    val rdd = getFriendsByAge("friends_by_age.csv")
 
     val totalsByFriends = rdd
       .mapValues(row => (row, 1))
@@ -39,7 +38,7 @@ object FriendsByAge {
       .foreach(tuple => {
         val age = tuple._1
         val friendsCount = tuple._2
-        println(f"For age: $age average friends: $friendsCount")
+        log.info(f"For age: $age average friends: $friendsCount")
       })
   }
 

@@ -10,7 +10,6 @@ import scala.math.sqrt
 object ItemBasedCollaborativeFiltering {
 
   private val log = Logger.getLogger("org.asaunin")
-  private val folder = "src/main/resources/data/"
   private val spark = SessionProvider.getContext(this.getClass.getName)
 
   type MoviePair = (Int, Int)
@@ -69,10 +68,10 @@ object ItemBasedCollaborativeFiltering {
 
   def main(args: Array[String]): Unit = {
     // Reading movie names data...
-    val movieNames: Map[Int, String] = getMovieNames(folder + "movie_names.data")
+    val movieNames: Map[Int, String] = getMovieNames("movie_names.data")
 
     // Reading movie rates data...
-    val movieRatings: RDD[(Int, MovieRating)] = getMovieRatings(folder + "movie_ratings.data")
+    val movieRatings: RDD[(Int, MovieRating)] = getMovieRatings("movie_ratings.data")
 
     // Joining rates...
     val joinedRatings: RDD[UserRatingPair] = movieRatings.join(movieRatings)
@@ -93,7 +92,7 @@ object ItemBasedCollaborativeFiltering {
     moviePairSimilarities.cache()
 
     // Selector variables
-    val movieId = 127
+    val movieId = if (args.length == 0) 127 else args(0).toInt //Godfather by default
     val movieName = movieNames(movieId)
     val similarCoeff = 0.97
     val totalUsersRated = 50
@@ -108,7 +107,7 @@ object ItemBasedCollaborativeFiltering {
         && similarity._2 > totalUsersRated)
     })
 
-    log.info("\nTop 10 similar movies for " + movieName)
+    log.info("Top 10 similar movies for " + movieName)
 
     filteredResults.map(x => (x._2, x._1))
       .sortByKey(ascending = false)

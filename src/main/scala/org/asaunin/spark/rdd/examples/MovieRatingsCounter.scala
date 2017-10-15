@@ -11,15 +11,14 @@ import scala.io.{Codec, Source}
 object MovieRatingsCounter {
 
   private val log = Logger.getLogger("org.asaunin")
-  private val folder = "src/main/resources/data/"
   private val spark = SessionProvider.getContext(this.getClass.getName)
 
   type MovieRating = (Int, Double)
 
   type UserRatingPair = (Int, (MovieRating, MovieRating))
 
-  def getMovieRatings(path: String): RDD[(Int, MovieRating)] = {
-    val rdd = spark.textFile(path)
+  def getMovieRatings(fileName: String): RDD[(Int, MovieRating)] = {
+    val rdd = spark.textFile("data/" + fileName)
     val header = rdd.first()
 
     rdd.filter(row => row != header)
@@ -32,13 +31,13 @@ object MovieRatingsCounter {
       })
   }
 
-  def getMovieNames(path: String): Map[Int, String] = {
+  def getMovieNames(fileName: String): Map[Int, String] = {
     val codec = Codec("UTF-8")
     codec.onMalformedInput(CodingErrorAction.REPLACE)
     codec.onUnmappableCharacter(CodingErrorAction.REPLACE)
 
     var movies: Map[Int, String] = Map()
-    val lines = Source.fromFile(path)(codec).getLines()
+    val lines = Source.fromFile("data/" + fileName)(codec).getLines()
     for (line <- lines) {
       val fields = line.split('|')
       if (fields.length > 1) {
@@ -51,12 +50,12 @@ object MovieRatingsCounter {
   }
 
   def main(args: Array[String]) {
-    val movieNames = getMovieNames(folder + "movie_names.data")
+    val movieNames = getMovieNames("movie_names.data")
     val movies = spark.broadcast(movieNames)
 
-    val rows = getMovieRatings(folder + "movie_ratings.data")
+    val rows = getMovieRatings("movie_ratings.data")
 
-    println("Movies count by rating:")
+    log.info("Movies count by rating:")
     val ratings = rows.map(_._2._2)
 
     val ratingCounts = ratings.countByValue().toSeq.sortBy(_._1)
@@ -64,11 +63,11 @@ object MovieRatingsCounter {
     ratingCounts.foreach(ratingCount => {
       val rating = ratingCount._1
       val count = ratingCount._2
-      println(f"Rating: $rating has $count movies")
+      log.info(f"Rating: $rating has $count movies")
     })
 
     val topCount = 25
-    println(s"\nTop $topCount most popular movies:")
+    log.info(s"\nTop $topCount most popular movies:")
     val movieAverageRatings = rows.map(row => (row._2._1, (row._2._2, 1)))
       .reduceByKey((x, y) => (x._1 + y._1, x._2 + y._2))
       .map(tuple => (tuple._2._1 / tuple._2._2, tuple._1))
@@ -80,7 +79,7 @@ object MovieRatingsCounter {
         val rating = movieRating._1
         val movieId = movieRating._2
         val movieName = movies.value(movieId)
-        println(f"Movie '$movieName' has rating: $rating%.2f")
+        log.info(f"Movie '$movieName' has rating: $rating%.2f")
       })
   }
 

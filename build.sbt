@@ -6,14 +6,18 @@ version := "0.1"
 
 scalaVersion := "2.11.8"
 
-val versionLog4j2 = "2.9.0"
+val sparkVersion = "2.2.0"
 
 libraryDependencies ++= Seq(
-  "org.scalatest" %% "scalatest" % "3.0.0" % "test",
-
-  "com.typesafe.scala-logging" %% "scala-logging_2.11" % "3.7.2",
-
-  "org.apache.spark" %% "spark-core_2.11" % "2.2.0",
-
-  "org.apache.spark" %% "spark-sql" % "2.2.0"
+  "org.apache.spark" %% "spark-core" % sparkVersion,
+  "org.apache.spark" %% "spark-sql" % sparkVersion
 )
+
+mainClass in assembly := Some("org.asaunin.spark.rdd.examples.ItemBasedCollaborativeFiltering")
+
+assemblyJarName in assembly := "movies-similarity.jar"
+
+assemblyMergeStrategy in assembly := {
+  case PathList("META-INF", xs@_*) => MergeStrategy.discard
+  case x => MergeStrategy.first
+}

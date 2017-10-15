@@ -8,7 +8,6 @@ import org.asaunin.spark.core.SessionProvider
 object MinMaxTemperature {
 
   private val log = Logger.getLogger("org.asaunin")
-  private val path = "src/main/resources/data/temperature.csv"
 
   object Type extends Enumeration {
     type Type = Value
@@ -17,9 +16,9 @@ object MinMaxTemperature {
     val Perceptron: Value = Value("PRCP")
   }
 
-  def getStationData(path: String): RDD[(String, Type.Type, Float)] = {
+  def getStationData(fileName: String): RDD[(String, Type.Type, Float)] = {
     val spark = SessionProvider.getContext(this.getClass.getName)
-    val rdd = spark.textFile(path)
+    val rdd = spark.textFile("data/" + fileName)
     val header = rdd.first()
     rdd.filter(row => row != header)
       .map { row =>
@@ -32,7 +31,7 @@ object MinMaxTemperature {
   }
 
   def main(args: Array[String]): Unit = {
-    val stationsData = getStationData(path)
+    val stationsData = getStationData("temperature.csv")
 
     val minTemperature = stationsData
       .filter(row => row._2 == Type.Min)
@@ -50,7 +49,7 @@ object MinMaxTemperature {
       val station = row._1
       val minTemp = row._2._1
       val maxTemp = row._2._2
-      println(f"For station: $station temperature values are: min=$minTemp%.2f, max=$maxTemp%.2f (°C)")
+      log.info(f"For station: $station temperature values are: min=$minTemp%.2f, max=$maxTemp%.2f (°C)")
     })
   }
 
