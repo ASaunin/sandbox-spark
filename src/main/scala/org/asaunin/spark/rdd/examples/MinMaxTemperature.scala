@@ -20,7 +20,7 @@ object MinMaxTemperature {
     val spark = SessionProvider.getContext(this.getClass.getName)
     val rdd = spark.textFile("data/" + fileName)
     val header = rdd.first()
-    rdd.filter(row => row != header)
+    rdd.filter(!_.equals(header))
       .map { row =>
         val fields = row.split(",")
         val stationId = fields(0)
@@ -34,12 +34,12 @@ object MinMaxTemperature {
     val stationsData = getStationData("temperature.csv")
 
     val minTemperature = stationsData
-      .filter(row => row._2 == Type.Min)
+      .filter(_._2.equals(Type.Min))
       .map(row => (row._1, row._3))
       .reduceByKey((x, y) => Math.min(x, y))
 
     val maxTemperature = stationsData
-      .filter(row => row._2 == Type.Max)
+      .filter(_._2.equals(Type.Max))
       .map(row => (row._1, row._3))
       .reduceByKey((x, y) => Math.max(x, y))
 

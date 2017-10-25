@@ -21,7 +21,7 @@ object MovieRatingsCounter {
     val rdd = spark.textFile("data/" + fileName)
     val header = rdd.first()
 
-    rdd.filter(row => row != header)
+    rdd.filter(!_.equals(header))
       .map(row => {
         val fields = row.split("\t")
         val userId = fields(0).toInt

@@ -11,8 +11,8 @@ object WordCounter {
   def getAllWords(fileName: String): RDD[String] = {
     val spark = SessionProvider.getContext(this.getClass.getName)
     val rdd = spark.textFile("data/" + fileName)
-    rdd.flatMap(row => row.split("\\W+"))
-      .map(word => word.toLowerCase)
+    rdd.flatMap(_.split("\\W+"))
+      .map(_.toLowerCase)
 
   }
 

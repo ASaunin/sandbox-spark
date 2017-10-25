@@ -13,7 +13,7 @@ object FriendsByAge {
     val rdd = spark.textFile("data/" + fileName)
     val header = rdd.first()
 
-    rdd.filter(row => row != header)
+    rdd.filter(!_.equals(header))
       .map { row =>
         val fields = row.split(",")
         val age = fields(2).toInt
