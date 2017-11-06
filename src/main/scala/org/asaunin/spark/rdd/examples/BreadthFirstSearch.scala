@@ -36,9 +36,9 @@ object BreadthFirstSearch {
       val fields = row.split("\\s+")
       val heroId = fields(0).toInt
 
-      var connections: ArrayBuffer[Int] = ArrayBuffer()
-      for (connection <- 1 until fields.length) {
-        connections += fields(connection).toInt
+      var relations: ArrayBuffer[Int] = ArrayBuffer()
+      for (relation <- 1 until fields.length) {
+        relations += fields(relation).toInt
       }
 
       var color = defaultColor
@@ -48,7 +48,7 @@ object BreadthFirstSearch {
         distance = 0
       }
 
-      (heroId, (connections.toArray, distance, color))
+      (heroId, (relations.toArray, distance, color))
     })
   }
 
@@ -65,18 +65,18 @@ object BreadthFirstSearch {
   def mapBfs(node: BfsNode): Array[BfsNode] = {
     val characterID: Int = node._1
     val data: BfsData = node._2
-    val connections: Array[Int] = data._1
+    val relations: Array[Int] = data._1
     val distance: Int = data._2
     var color: Color = data._3
 
     var results: ArrayBuffer[BfsNode] = ArrayBuffer()
     if (color == Color.GRAY) {
-      for (connection <- connections) {
-        val newCharacterID = connection
+      for (relation <- relations) {
+        val newCharacterID = relation
         val newDistance = distance + 1
         val newColor = Color.GRAY
 
-        if (toHeroId == connection) {
+        if (toHeroId == relation) {
           if (counter.isDefined) {
             counter.get.add(1)
           }
@@ -136,7 +136,7 @@ object BreadthFirstSearch {
   }
 
   def main(args: Array[String]) {
-    var namesById = getHeroNames("marvel_names.txt")
+    val namesById = getHeroNames("marvel_names.txt")
     val fromHeroName = namesById.lookup(fromHeroId).head
     val toHeroName = namesById.lookup(toHeroId).head
 
